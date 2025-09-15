@@ -55,24 +55,40 @@ RUN sudo apt-get update && sudo apt-get install -y \
     && sudo rm -rf /var/lib/apt/lists/*
 ENV LANG=en_US.UTF-8
 
-# Add ROS2 repository
-RUN curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /tmp/ros-archive-keyring.gpg \
-    && sudo mv /tmp/ros-archive-keyring.gpg /usr/share/keyrings/ros-archive-keyring.gpg \
-    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main" | sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null
-
 # Set timezone non-interactively
 ENV DEBIAN_FRONTEND=noninteractive
 RUN sudo ln -fs /usr/share/zoneinfo/UTC /etc/localtime
 
-# Install ROS 2 packages (official Desktop Install method)
-RUN sudo apt-get update && sudo apt-get upgrade -y \
-    && sudo apt-get install -y \
-    ros-${ROS_DISTRO}-ros-base \
+# Setup ROS2 repository using the official ros-apt-source method
+RUN sudo apt update && sudo apt install -y software-properties-common curl \
+    && sudo add-apt-repository universe \
+    && sudo apt update
+
+# Install ROS2 apt source
+RUN export ROS_APT_SOURCE_VERSION=$(curl -s https://api.github.com/repos/ros-infrastructure/ros-apt-source/releases/latest | grep -F "tag_name" | awk -F'"' '{print $4}') \
+    && curl -L -o /tmp/ros2-apt-source.deb "https://github.com/ros-infrastructure/ros-apt-source/releases/download/${ROS_APT_SOURCE_VERSION}/ros2-apt-source_${ROS_APT_SOURCE_VERSION}.$(. /etc/os-release && echo $VERSION_CODENAME)_all.deb" \
+    && sudo dpkg -i /tmp/ros2-apt-source.deb \
+    && rm /tmp/ros2-apt-source.deb
+
+# Force resolve dependency conflicts and install ROS desktop + RViz
+RUN sudo apt update && sudo apt upgrade -y \
+    && sudo apt install -y --allow-downgrades \
+    libbrotli1=1.0.9-2build6 \
+    && sudo apt-mark hold libbrotli1 \
+    && sudo apt install -y \
+    libfreetype6-dev \
+    libfontconfig1-dev \
+    && sudo rm -rf /var/lib/apt/lists/*
+
+# Install ROS 2 desktop with RViz (now that dev dependencies are resolved)
+RUN sudo apt update \
+    && sudo apt install -y \
+    ros-${ROS_DISTRO}-desktop \
     ros-${ROS_DISTRO}-rmw-cyclonedds-cpp \
     ros-${ROS_DISTRO}-foxglove-bridge \
     ros-${ROS_DISTRO}-cv-bridge \
-    ros-${ROS_DISTRO}-ament-cmake \
-    python3-colcon-common-extensions
+    python3-colcon-common-extensions \
+    && sudo rm -rf /var/lib/apt/lists/*
 
 # Additional ROS2 packages (commented out to reduce build time and image size)
 # Uncomment as needed for your specific use case:

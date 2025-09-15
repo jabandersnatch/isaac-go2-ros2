@@ -84,7 +84,8 @@ def run_simulator(cfg):
             actions = policy(obs)
 
             # step the environment
-            obs, _, _, _ = env.step(actions)
+            step_result = env.step(actions)
+            obs = step_result[0]
 
             # # ROS2 data
             dm.pub_ros2_data()

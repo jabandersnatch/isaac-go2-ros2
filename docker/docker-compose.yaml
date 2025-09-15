@@ -20,19 +20,22 @@ services:
       - PRIVACY_CONSENT=N
       - NVIDIA_DRIVER_CAPABILITIES=all
       - OMNI_KIT_ALLOW_ROOT=1
-      
+
+      # Add Wayland support
+      - WAYLAND_DISPLAY=${WAYLAND_DISPLAY}
+      - XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR}
+      - QT_QPA_PLATFORM=xcb
       # X11 forwarding for GUI
       - DISPLAY=${DISPLAY}
-      
+
       # ROS2 configuration
       - AUTO_BUILD=${AUTO_BUILD}
       - AUTO_RUN=${AUTO_RUN}
       - LOCAL_USER_ID=${LOCAL_USER_ID:-1000}
       - LOCAL_GROUP_ID=${LOCAL_GROUP_ID:-1000}
-      - ROS_WS=/home/ubuntu/isaac-go2-ros2/ros2_ws
       - ROS_DOMAIN_ID=${ROS_DOMAIN_ID}
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-      
+
     volumes:
       - ~/App/isaac-sim/cache/kit:/isaac-sim/kit/cache:rw
       - ~/App/isaac-sim/cache/ov:/root/.cache/ov:rw
@@ -43,14 +46,16 @@ services:
       - ~/App/isaac-sim/data:/root/.local/share/ov/data:rw
       - ~/App/isaac-sim/documents:/root/Documents:rw
 
-      # Mount local timezone into container.
-      - /etc/timezone:/etc/timezone:ro
-      - /etc/localtime:/etc/localtime:ro
-      # Mount X11 server
+      # Mount local timezone into container (commented out due to compatibility issues)
+      # - /etc/timezone:/etc/timezone:ro
+      # - /etc/localtime:/etc/localtime:ro
+      # Mount display server sockets and auth files
+      - ${XDG_RUNTIME_DIR}/${WAYLAND_DISPLAY}:${XDG_RUNTIME_DIR}/${WAYLAND_DISPLAY}:rw
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - ${HOME}/.Xauthority:/home/ubuntu/.Xauthority:rw
 
       - ../:/home/ubuntu/isaac-go2-ros2
-    
+
     stop_grace_period: 3s
 
     deploy:
@@ -58,7 +63,7 @@ services:
         reservations:
           devices:
             - capabilities: [gpu]
-            
+
     # entrypoint: ["/isaac-sim/isaac-sim.sh", "--allow-root"]
     # entrypoint: ["/isaac-sim/isaac-sim.sh"]
     # entrypoint: bash

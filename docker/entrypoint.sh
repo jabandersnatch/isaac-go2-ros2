@@ -1,5 +1,4 @@
 #!/bin/bash -e
-
 # Environment variables with defaults
 USER_ID=${LOCAL_USER_ID:-1000}
 GROUP_ID=${LOCAL_GROUP_ID:-1000}
@@ -79,7 +78,8 @@ fi
 if [ "${AUTO_RUN}" = "true" ]; then
     echo "Launching main program..."
     cd /home/ubuntu/isaac-go2-ros2
-    python isaac_go2_ros2.py
+    # Use unified entry point that handles both Go2 and G1
+    python isaac_unified_ros2.py
 fi
 
 # If no command is provided, start an idle loop to keep the container alive

@@ -3,12 +3,11 @@ defaults:
 
 num_envs: 1
 freq: 40 # can only be divisible by 200
-camera_follow: True
-env_name: obstacle-dense
-# env_name: full-warehouse
+camera_follow: False
+env_name: warehouse # Use default for better G1 stability
 
 sensor:
-  enable_lidar: True
+  enable_lidar: False # Disable LiDAR for G1 to avoid issues
   enable_camera: True
   color_image: True
   depth_image: True
@@ -19,3 +18,7 @@ sim_app:
   width: 1280
   height: 720
   hide_ui: False
+
+# G1-specific settings
+robot_type: g1 # For unified launcher
+debug_mode: True # Enable comprehensive logging
